@@ -9,9 +9,9 @@
 <style>
   :root { --bg:#120d0a; --panel:#1b1511; --line:#33271e; --ink:#f5ebde; --muted:#a8988a; --amber:#ffb347; --amber2:#ffd28a; --heat:#ff5a3c; --ok:#5fd39b; --cool:#5fd0e6; }
   * { box-sizing:border-box; }
-  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:"Instrument Sans",system-ui,sans-serif; overflow:hidden; }
+  html, body { margin:0; height:100%; background:radial-gradient(ellipse at 20% 22%, rgba(255,179,71,.13), transparent 55%), var(--bg); color:var(--ink); font-family:"Instrument Sans",system-ui,sans-serif; overflow:hidden; }
   .deck { width:1600px; height:900px; position:absolute; left:50%; top:50%; transform-origin:center; }
-  .slide { position:absolute; inset:0; padding:84px 96px; background:radial-gradient(ellipse at 18% 20%, rgba(255,179,71,.13), transparent 55%); opacity:0; pointer-events:none; transition:opacity .6s ease; }
+  .slide { position:absolute; inset:0; padding:84px 96px; opacity:0; pointer-events:none; transition:opacity .6s ease; }
   .slide.on { opacity:1; pointer-events:auto; }
   .kicker { font:600 16px/1 "JetBrains Mono",monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--amber); }
   h1 { font:600 170px/0.95 Fraunces,serif; margin:34px 0 0; letter-spacing:-3px; }
