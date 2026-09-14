@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Porchlight · pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#120d0a; --panel:#1b1511; --line:#33271e; --ink:#f5ebde; --muted:#a8988a; --amber:#ffb347; --amber2:#ffd28a; --heat:#ff5a3c; --ok:#5fd39b; --cool:#5fd0e6; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:"Instrument Sans",system-ui,sans-serif; overflow:hidden; }
+  .deck { width:1600px; height:900px; position:absolute; left:50%; top:50%; transform-origin:center; }
+  .slide { position:absolute; inset:0; padding:84px 96px; background:radial-gradient(ellipse at 18% 20%, rgba(255,179,71,.13), transparent 55%); opacity:0; pointer-events:none; transition:opacity .6s ease; }
+  .slide.on { opacity:1; pointer-events:auto; }
+  .kicker { font:600 16px/1 "JetBrains Mono",monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--amber); }
+  h1 { font:600 170px/0.95 Fraunces,serif; margin:34px 0 0; letter-spacing:-3px; }
+  h2 { font:600 64px/1.05 Fraunces,serif; margin:18px 0 0; letter-spacing:-1px; max-width:1300px; }
+  .lede { font-size:36px; line-height:1.35; color:#eadccb; max-width:980px; margin-top:34px; }
+  .muted { color:var(--muted); }
+  .foot { position:absolute; left:96px; right:96px; bottom:54px; display:flex; justify-content:space-between; font:500 16px "JetBrains Mono",monospace; color:var(--muted); }
+  .lamp { position:absolute; right:110px; top:150px; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle, rgba(255,210,138,.55), rgba(255,154,60,.12) 45%, transparent 70%); animation:breathe 4s ease-in-out infinite; }
+  .lamp::after { content:""; position:absolute; left:50%; top:50%; width:104px; height:132px; transform:translate(-50%,-50%); border-radius:18px; background:linear-gradient(#ffd28a,#ffb347); box-shadow:0 0 80px rgba(255,179,71,.8); }
+  @keyframes breathe { 50% { transform:scale(1.06); opacity:.85; } }
+  .teaser { display:flex; gap:18px; margin-top:64px; }
+  .teaser span { font:500 22px "JetBrains Mono",monospace; padding:12px 18px; border:1px solid var(--line); border-radius:14px; background:var(--panel); color:var(--amber2); }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:28px; margin-top:52px; }
+  .stat { background:var(--panel); border:1px solid var(--line); border-radius:22px; padding:30px 30px 26px; }
+  .stat b { display:block; font:600 92px/1 Fraunces,serif; color:var(--amber2); }
+  .stat.hot b { color:var(--heat); }
+  .stat p { margin:12px 0 0; font-size:23px; line-height:1.35; color:#e4d6c6; }
+  .src { font-size:15px; color:var(--muted); margin-top:26px; line-height:1.5; max-width:1400px; }
+  .who { margin-top:34px; font-size:28px; line-height:1.4; color:#eadccb; max-width:1380px; }
+  .who b { color:var(--amber2); font-weight:600; }
+  .flow { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-top:50px; }
+  .step { background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:22px 20px; min-height:240px; }
+  .step .n { font:600 14px "JetBrains Mono",monospace; color:var(--amber); letter-spacing:.1em; }
+  .step h3 { font:600 29px/1.1 Fraunces,serif; margin:10px 0 10px; }
+  .step p { margin:0; font-size:19px; line-height:1.4; color:#dccdbc; }
+  .step code { font:15px "JetBrains Mono",monospace; color:var(--amber2); }
+  .step.human { border-color:var(--heat); background:linear-gradient(180deg,#2a1812,#1b120d); }
+  .step.human .n { color:var(--heat); }
+  .tech { display:flex; gap:14px; flex-wrap:wrap; margin-top:36px; max-width:1400px; }
+  .tech span { font:500 19px "JetBrains Mono",monospace; padding:10px 16px; border-radius:12px; border:1px solid var(--line); background:var(--panel); }
+  .tech span.s { border-color:var(--amber); color:var(--amber2); }
+  .rules { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:44px; }
+  .rule { border-left:4px solid var(--ok); background:rgba(95,211,155,.06); padding:20px 24px; border-radius:0 16px 16px 0; font-size:24px; line-height:1.35; }
+  .big { font:600 100px/1 Fraunces,serif; color:var(--ok); letter-spacing:-2px; margin-top:40px; }
+  .nav { position:fixed; bottom:14px; right:18px; font:12px "JetBrains Mono",monospace; color:#6f6053; }
+  body.rec .nav { display:none; }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <section class="slide">
+    <div class="lamp"></div>
+    <div class="kicker">Agents for Humans · Good Neighbor Agents</div>
+    <h1>Porchlight</h1>
+    <div class="lede">In a heat wave, the people most likely to die are the ones nobody checks on.<br /><span class="muted">A Strands agent that makes sure every isolated neighbor gets a knock on the door.</span></div>
+    <div class="teaser"><span>34 neighbors</span><span>7 volunteers</span><span>1 human decision</span></div>
+    <div class="foot"><span>Built with Strands Agents SDK</span><span>porchlight-bay.vercel.app</span></div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The problem</div>
+    <h2>Heat deaths happen quietly, indoors, to people alone.</h2>
+    <div class="stats">
+      <div class="stat hot"><b>619</b><p>people died in British Columbia's 2021 heat dome. 98% died indoors.</p></div>
+      <div class="stat"><b>56%</b><p>of them lived alone. Two-thirds were 70 or older.</p></div>
+      <div class="stat"><b>70%</b><p>of A/C units weren't working where people died of heat indoors in Phoenix's Maricopa County, 2024.</p></div>
+    </div>
+    <div class="who"><b>Who it's for:</b> neighborhood mutual-aid groups, senior centers and churches, where one volunteer coordinator juggles a spreadsheet, a phone and a heat warning. B.C.'s coroners recommended prioritizing people who live alone for home visits during extreme heat.</div>
+    <div class="src">Sources: BC Coroners Service, <i>Extreme Heat and Human Mortality: A Review of Heat-Related Deaths in B.C. in Summer 2021</i> (2022). Maricopa County Department of Public Health, 2024 heat deaths report: 602 confirmed deaths; 88% of indoor deaths had an A/C unit present, 70% of those units non-functional.</div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Our solution · how it works</div>
+    <h2>The agent does the legwork. The coordinator makes the calls.</h2>
+    <div class="flow">
+      <div class="step"><div class="n">01 · WATCH</div><h3>Heat warning</h3><p>Live National Weather Service alerts via <code>check_heat_alert</code>.</p></div>
+      <div class="step"><div class="n">02 · TRIAGE</div><h3>Score &amp; route</h3><p>Fixed risk rules; nearest volunteer, highest risk first.</p></div>
+      <div class="step"><div class="n">03 · FOLLOW UP</div><h3>Read reports</h3><p>The model reads volunteers' notes; rules book cooling rides and retries.</p></div>
+      <div class="step human"><div class="n">04 · ESCALATE</div><h3>Only when it matters</h3><p>Two unanswered visits → one decision card for the human.</p></div>
+      <div class="step"><div class="n">05 · CLOSE THE LOOP</div><h3>Act on approval</h3><p>Welfare check or second visit, then track until reached.</p></div>
+    </div>
+    <div class="tech">
+      <span class="s">Strands Agents SDK (TypeScript)</span><span class="s">9 tools</span><span class="s">BeforeToolCallEvent guardrail hooks</span><span>OpenAI-compatible model · Qwen3.8-27B</span><span>api.weather.gov</span><span>Next.js on Vercel</span><span>Leaflet + OpenStreetMap</span>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Why it matters</div>
+    <h2>One coordinator. Seven volunteers. Nobody forgotten.</h2>
+    <div class="big">34 of 34 reached</div>
+    <div class="lede" style="margin-top:16px; font-size:28px; max-width:1300px">In our drill: 34 at-risk neighbors checked in 100 simulated minutes, a cooling ride booked, and one woman found on her kitchen floor in time. The coordinator made exactly one decision.</div>
+    <div class="rules">
+      <div class="rule">No mass texting without a heat warning</div>
+      <div class="rule">No escalation before two unanswered visits</div>
+      <div class="rule">No police or entry without human approval</div>
+    </div>
+    <div class="foot"><span>Guardrails enforced in code by Strands hooks, not by prompts</span><span>Open source · MIT</span></div>
+  </section>
+
+</div>
+<div class="nav">← → to navigate</div>
+<script>
+  const slides = [...document.querySelectorAll(".slide")];
+  const params = new URLSearchParams(location.search);
+  if (params.has("rec")) document.body.classList.add("rec");
+  let i = Math.min(Math.max((parseInt(params.get("s") || "1", 10) || 1) - 1, 0), slides.length - 1);
+  const show = () => {
+    slides.forEach((s, k) => s.classList.toggle("on", k === i));
+    params.set("s", String(i + 1));
+    history.replaceState(null, "", "?" + params.toString());
+  };
+  const fit = () => {
+    const s = Math.min(innerWidth / 1600, innerHeight / 900);
+    document.getElementById("deck").style.transform = `translate(-50%, -50%) scale(${s})`;
+  };
+  addEventListener("keydown", (e) => {
+    if (["ArrowRight", " ", "PageDown"].includes(e.key)) i = Math.min(i + 1, slides.length - 1);
+    else if (["ArrowLeft", "PageUp"].includes(e.key)) i = Math.max(i - 1, 0);
+    else return;
+    e.preventDefault();
+    show();
+  });
+  addEventListener("click", () => { i = (i + 1) % slides.length; show(); });
+  addEventListener("resize", fit);
+  fit();
+  show();
+</script>
+</body>
+</html>

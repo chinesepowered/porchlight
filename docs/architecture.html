@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Porchlight architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Instrument+Sans:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#120d0a; --panel:#1b1511; --line:#3a2c21; --ink:#f5ebde; --muted:#a8988a; --amber:#ffb347; --amber2:#ffd28a; --heat:#ff5a3c; --ok:#5fd39b; --cool:#5fd0e6; }
+  * { box-sizing: border-box; }
+  body { margin:0; width:1600px; height:1000px; background:var(--bg); color:var(--ink); font-family:"Instrument Sans",system-ui,sans-serif; position:relative; overflow:hidden; }
+  h1 { position:absolute; left:48px; top:34px; margin:0; font:600 40px/1 Fraunces,serif; }
+  .sub { position:absolute; left:50px; top:84px; color:var(--muted); font-size:17px; }
+  .box { position:absolute; background:var(--panel); border:1.5px solid var(--line); border-radius:18px; padding:18px 20px; }
+  .box h2 { margin:0 0 8px; font:600 22px/1.15 Fraunces,serif; }
+  .k { font:600 11px/1 "JetBrains Mono",monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--amber); margin-bottom:8px; }
+  .box p, .box li { font-size:14.5px; line-height:1.45; color:#e4d6c6; margin:0; }
+  ul { margin:0; padding-left:18px; }
+  code { font:13px "JetBrains Mono",monospace; color:var(--amber2); }
+  .strands { border-color:var(--amber); box-shadow:0 0 0 6px rgba(255,179,71,.08), 0 0 60px rgba(255,179,71,.10); }
+  .hook { border-color:var(--ok); }
+  .hook .k { color:var(--ok); }
+  .ext .k { color:var(--cool); }
+  .human { border-color:var(--heat); }
+  .human .k { color:var(--heat); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:4px 18px; }
+  svg { position:absolute; inset:0; pointer-events:none; }
+  .lbl { position:absolute; font:12.5px "JetBrains Mono",monospace; color:var(--muted); background:var(--bg); padding:2px 6px; border-radius:6px; }
+</style>
+</head>
+<body>
+  <h1>Porchlight · architecture</h1>
+  <div class="sub">Heat-wave welfare checks run by a Strands agent; deterministic tools &amp; hooks; the human coordinator decides.</div>
+
+  <!-- Browser -->
+  <div class="box human" style="left:48px; top:150px; width:360px; height:330px;">
+    <div class="k">Browser · Next.js client</div>
+    <h2>Coordinator dashboard</h2>
+    <ul>
+      <li>Leaflet map on OpenStreetMap tiles: resident pins, volunteer routes, live "reached" counter</li>
+      <li>Agent activity feed (tool calls, guardrail verdicts, agent summaries), streamed as NDJSON</li>
+      <li><b>Decision card</b>: the only place a human is interrupted</li>
+      <li>Holds demo state; sends <code>{ event, world }</code></li>
+    </ul>
+  </div>
+
+  <!-- API route -->
+  <div class="box" style="left:48px; top:560px; width:360px; height:180px;">
+    <div class="k">Vercel · Node runtime</div>
+    <h2><code>app/api/agent/route.ts</code></h2>
+    <p>Per-IP rate limit, payload checks, streams agent events back. <code>app/api/nws</code> proxies live weather for the header.</p>
+  </div>
+
+  <!-- Strands agent -->
+  <div class="box strands" style="left:500px; top:150px; width:600px; height:590px;">
+    <div class="k">Strands Agents SDK (TypeScript) · lib/agent.ts</div>
+    <h2>Porchlight agent loop</h2>
+    <p style="margin-bottom:14px">One <code>Agent</code> per event (<code>heat_check</code>, <code>inbox</code>, <code>decision</code>). The model plans the order of work and reads volunteers' free-text notes; every consequential step is a tool.</p>
+
+    <div class="box" style="position:relative; padding:14px 16px; margin-bottom:14px;">
+      <div class="k">9 tools · <code>tool()</code> + zod schemas</div>
+      <div class="grid2">
+        <code>check_heat_alert</code><code>read_volunteer_inbox</code>
+        <code>score_residents</code><code>record_note_outcome</code>
+        <code>plan_checkins</code><code>escalate_to_coordinator</code>
+        <code>send_checkin_requests</code><code>request_welfare_check</code>
+        <span></span><code>dispatch_second_visit</code>
+      </div>
+    </div>
+
+    <div class="box hook" style="position:relative; padding:14px 16px; margin-bottom:14px;">
+      <div class="k">Guardrail hook · <code>BeforeToolCallEvent</code></div>
+      <ul>
+        <li>No scoring, routing or texting without an active heat warning</li>
+        <li>Max 2 automated texts per resident per hour; max 14 tool calls per run</li>
+        <li>Escalation only after <b>two unanswered visits</b>; no duplicate cards</li>
+        <li>Welfare check / entry only with <b>coordinator approval</b>, carried out before anything else</li>
+      </ul>
+    </div>
+
+    <div class="box" style="position:relative; padding:14px 16px;">
+      <div class="k">Deterministic rules · lib/rules.ts</div>
+      <p>Risk score (age, lives alone, AC, heat-sensitive meds, mobility, top floor) · greedy nearest-volunteer assignment with capacity, high-risk stops first · nearest cooling center · reach counts.</p>
+    </div>
+  </div>
+
+  <!-- Model -->
+  <div class="box ext" style="left:1190px; top:150px; width:362px; height:200px;">
+    <div class="k">Model provider · OpenAI-compatible</div>
+    <h2>Qwen3.8-27B on W&amp;B Inference</h2>
+    <p>Strands <code>OpenAIModel</code> (<code>api: "chat"</code>, temperature 0). Strands is model-agnostic: swap in Amazon Bedrock without touching tools or hooks.</p>
+  </div>
+
+  <!-- NWS -->
+  <div class="box ext" style="left:1190px; top:400px; width:362px; height:160px;">
+    <div class="k">Live public data</div>
+    <h2>National Weather Service</h2>
+    <p><code>api.weather.gov</code> active alerts + hourly forecast for Maryvale, Phoenix. A clearly labeled simulated warning powers drills.</p>
+  </div>
+
+  <!-- Volunteers -->
+  <div class="box ext" style="left:1190px; top:610px; width:362px; height:130px;">
+    <div class="k">Simulated in demo</div>
+    <h2>SMS &amp; volunteer inbox</h2>
+    <p>Texts are logged; volunteer reports (quick OKs + free-text notes) are seeded fictional data.</p>
+  </div>
+
+  <div class="box" style="left:48px; top:800px; width:1504px; height:150px; border-style:dashed;">
+    <div class="k">One heat event, end to end</div>
+    <p style="font-size:16px; line-height:1.6">
+      NWS warning → <b>score_residents</b> (8 high risk) → <b>plan_checkins</b> (7 volunteers, 34 visits) → <b>send_checkin_requests</b> → volunteers report →
+      model classifies notes with <b>record_note_outcome</b> (cooling ride booked · retry scheduled) → second unanswered visit →
+      hook allows <b>escalate_to_coordinator</b> → coordinator approves a welfare check → hook allows <b>request_welfare_check</b> → resident found, EMS → <b>34 of 34 reached</b>.
+    </p>
+  </div>
+
+  <svg width="1600" height="1000">
+    <defs>
+      <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a7666"/></marker>
+      <marker id="am" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ffb347"/></marker>
+    </defs>
+    <path d="M228 480 L228 556" stroke="#8a7666" stroke-width="2" fill="none" marker-end="url(#a)"/>
+    <path d="M190 556 L190 484" stroke="#8a7666" stroke-width="2" fill="none" marker-end="url(#a)" stroke-dasharray="6 5"/>
+    <path d="M408 650 L496 650" stroke="#ffb347" stroke-width="2.5" fill="none" marker-end="url(#am)"/>
+    <path d="M1100 250 L1186 250" stroke="#8a7666" stroke-width="2" fill="none" marker-end="url(#a)"/>
+    <path d="M1100 480 L1186 480" stroke="#8a7666" stroke-width="2" fill="none" marker-end="url(#a)"/>
+    <path d="M1100 675 L1186 675" stroke="#8a7666" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  </svg>
+  <div class="lbl" style="left:236px; top:505px;">POST event + world</div>
+  <div class="lbl" style="left:62px; top:505px;">NDJSON stream</div>
+  <div class="lbl" style="left:412px; top:620px;">invoke()</div>
+  <div class="lbl" style="left:1106px; top:222px;">chat + tools</div>
+  <div class="lbl" style="left:1106px; top:452px;">fetch</div>
+  <div class="lbl" style="left:1106px; top:647px;">log / read</div>
+</body>
+</html>
